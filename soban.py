@@ -41,8 +41,20 @@ def get_events(service, target_calendar_id, start_of_month, end_of_month):
 
 def read_calendar_id():
     """캘린더 ID를 파일에서 읽어오는 함수입니다."""
-    with open('calendar_id', 'r') as f:
+    with open('calendar_id.txt', 'r') as f:
         return f.read().strip()
+
+
+def read_members():
+    """멤버 목록을 파일에서 읽어오는 함수입니다."""
+    with open('members.txt', 'r', encoding='utf-8') as f:
+        return [line.strip() for line in f.readlines()]
+
+
+def read_total_cost():
+    """총 식사 비용을 파일에서 읽어오는 함수입니다."""
+    with open('total_cost.txt', 'r', encoding='utf-8') as f:
+        return int(f.read().strip())
 
 
 def calculate_meal_costs(events, holiday_dates, members, total_cost):
@@ -147,15 +159,9 @@ def main():
     events = get_events(service, target_calendar_id,
                         start_of_month, end_of_month)
 
-    # 기본 멤버 목록을 정의합니다.
-    default_members = []
-    members_input = input("멤버 목록을 입력하세요 (쉼표로 구분, 기본값 사용 시 Enter): ")
-    members = [member.strip() for member in members_input.split(',')
-               ] if members_input else default_members
-
-    # 총 식사 비용을 입력받습니다.
-    total_cost_input = input("한 달 동안 사용한 식사 비용을 입력하세요 (기본값: 1000000): ")
-    total_cost = int(total_cost_input) if total_cost_input else 1000000
+    # 멤버 목록과 총 비용을 파일에서 읽어옵니다.
+    members = read_members()
+    total_cost = read_total_cost()
 
     # 각 멤버의 비용을 계산합니다.
     costs, meal_attendance, meal_count_per_member, cost_per_meal = calculate_meal_costs(
@@ -174,12 +180,12 @@ def main():
 
                 if date in holiday_dates:
                     f.write(
-                        f"{date}({day_of_week}) - 휴일: {holiday_dates[date]}\n")
+                        f"{date}({day_of_week}) - ({holiday_dates[date]})\n")
                 elif date in meal_attendance:
                     attendees = sorted(
                         meal_attendance[date], key=lambda x: members.index(x))  # 입력된 순서대로 정렬
                     f.write(
-                        f"{date}({day_of_week}) - {' '.join(attendees)} 식사함\n")
+                        f"{date}({day_of_week}) - {' '.join(attendees)}\n")
             except ValueError:
                 continue  # 잘못된 날짜는 무시
 

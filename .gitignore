@@ -1,3 +1,2 @@
-credentials.json
-token.json
-calendar_id
+*.json
+*.txt
