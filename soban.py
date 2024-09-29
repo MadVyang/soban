@@ -57,7 +57,7 @@ def read_total_cost():
         return int(f.read().strip())
 
 
-def calculate_meal_costs(events, holiday_dates, members, total_cost):
+def calculate_meal_costs(events, holiday_dates, members, total_cost, current_year, current_month):
     """각 멤버의 최종 부담 비용을 계산하는 함수입니다."""
     weekdays = [0, 1, 2, 3]  # 월요일: 0, 화요일: 1, 수요일: 2, 목요일: 3
     meals_per_day = {}
@@ -67,8 +67,7 @@ def calculate_meal_costs(events, holiday_dates, members, total_cost):
     # 월요일부터 목요일까지 체크
     for day in range(1, 32):
         try:
-            date = datetime.date(datetime.datetime.now(
-            ).year, datetime.datetime.now().month, day)
+            date = datetime.date(current_year, current_month, day)
             if date.weekday() in weekdays:
                 meals_per_day[date] = set(members)  # 기본적으로 모든 멤버가 식사하는 것으로 초기화
                 meal_attendance[date] = set(members)  # 기본적으로 모든 멤버가 참석한다고 가정
@@ -124,6 +123,10 @@ def get_korean_weekday(date):
 
 
 def main():
+    # 사용자로부터 연도와 달을 입력받습니다.
+    current_year = int(input("연도를 입력하세요 (예: 2024): "))
+    current_month = int(input("달을 입력하세요 (1-12): "))
+
     # 인증 정보 파일을 불러옵니다.
     creds = None
     if os.path.exists('token.json'):
@@ -141,11 +144,10 @@ def main():
     # Google Calendar API 클라이언트를 빌드합니다.
     service = build('calendar', 'v3', credentials=creds)
 
-    # 이번 달의 시작과 끝 날짜를 설정합니다.
-    now = datetime.datetime.utcnow()
+    # 지정한 달의 시작과 끝 날짜를 설정합니다.
     start_of_month = datetime.datetime(
-        now.year, now.month, 1).isoformat() + 'Z'
-    end_of_month = (datetime.datetime(now.year, now.month + 1,
+        current_year, current_month, 1).isoformat() + 'Z'
+    end_of_month = (datetime.datetime(current_year, current_month + 1,
                     1) - datetime.timedelta(days=1)).isoformat() + 'Z'
 
     print(
@@ -165,17 +167,16 @@ def main():
 
     # 각 멤버의 비용을 계산합니다.
     costs, meal_attendance, meal_count_per_member, cost_per_meal = calculate_meal_costs(
-        events, holiday_dates, members, total_cost)
+        events, holiday_dates, members, total_cost, current_year, current_month)
 
     # 결과를 파일로 저장합니다.
     with open('meal_costs_result.txt', 'w', encoding='utf-8') as f:
         f.write("날짜별 식사 참여자:\n")
 
-        # 이번 달의 모든 날짜에 대해 체크
+        # 지정한 달의 모든 날짜에 대해 체크
         for day in range(1, 32):
             try:
-                date = datetime.date(datetime.datetime.now(
-                ).year, datetime.datetime.now().month, day)
+                date = datetime.date(current_year, current_month, day)
                 day_of_week = get_korean_weekday(date)
 
                 if date in holiday_dates:
