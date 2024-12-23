@@ -4,6 +4,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+import math
 
 # Calendar API에 접근할 범위를 설정합니다.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -144,11 +145,17 @@ def main():
     # Google Calendar API 클라이언트를 빌드합니다.
     service = build('calendar', 'v3', credentials=creds)
 
-    # 지정한 달의 시작과 끝 날짜를 설정합니다.
+    # 이번 달의 시작 날짜
     start_of_month = datetime.datetime(
         current_year, current_month, 1).isoformat() + 'Z'
-    end_of_month = (datetime.datetime(current_year, current_month + 1,
-                    1) - datetime.timedelta(days=1)).isoformat() + 'Z'
+
+    # 이번 달의 마지막 날짜
+    if current_month == 12:
+        end_of_month = (datetime.datetime(current_year + 1, 1, 1) -
+                        datetime.timedelta(days=1)).isoformat() + 'Z'
+    else:
+        end_of_month = (datetime.datetime(current_year, current_month + 1,
+                        1) - datetime.timedelta(days=1)).isoformat() + 'Z'
 
     print(
         f'Getting events from {start_of_month} to {end_of_month} (Monday to Thursday, excluding holidays)')
@@ -194,7 +201,7 @@ def main():
         f.write("각 멤버의 부담 비용:\n")
         for member in members:  # 입력된 순서대로 출력
             f.write(
-                f"{member}: {costs[member]:.2f} 원, 식사 횟수: {meal_count_per_member[member]} 회\n")
+                f"{member}: {math.ceil(costs[member])} 원, 식사 횟수: {meal_count_per_member[member]} 회\n")
 
     print("결과가 meal_costs_result.txt 파일에 저장되었습니다.")
 
