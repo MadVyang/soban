@@ -79,22 +79,20 @@ def calculate_meal_costs(events, holiday_dates, members, total_cost, current_yea
         start_time = event['start'].get('dateTime', event['start'].get('date'))
         end_time = event['end'].get('dateTime', event['end'].get('date'))
 
-        if 'Z' not in start_time:
-            start_time += 'Z'
-        if 'Z' not in end_time:
-            end_time += 'Z'
+        start_date = datetime.datetime.fromisoformat(start_time[:10]).date()
+        end_date = datetime.datetime.fromisoformat(end_time[:10]).date()
 
-        start_date = datetime.datetime.fromisoformat(start_time[:-1]).date()
-        end_date = datetime.datetime.fromisoformat(end_time[:-1]).date()
+        # Google Calendar의 "하루 종일 이벤트"는 end_date가 다음 날 00:00:00으로 저장될 수 있음
+        if start_date != end_date:
+            end_date -= datetime.timedelta(days=1)  # 종료 날짜를 하루 줄임
 
-        # 각 날짜를 체크하여 누가 식사를 빠졌는지 업데이트
+        # 날짜 범위 내의 모든 날짜에 대해 빠진 사람 제거
         for single_date in (start_date + datetime.timedelta(n) for n in range((end_date - start_date).days + 1)):
             if single_date in meals_per_day:
-                missed_people = event['summary'].split(',')
+                missed_people = [p.strip() for p in event['summary'].split(',')]
                 for person in missed_people:
-                    meals_per_day[single_date].discard(person.strip())
-                    meal_attendance[single_date].discard(
-                        person.strip())  # 식사 안 한 사람 기록
+                    meals_per_day[single_date].discard(person)
+                    meal_attendance[single_date].discard(person)
 
     # 식사 수를 계산합니다.
     total_meals = 0
